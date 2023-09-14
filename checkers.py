@@ -18,6 +18,19 @@ def main():
 
 
 def availableMoves(gameboard, turn):
+    """
+    availableMoves()
+
+    parameters:
+    - gameboard: full checkers board
+    - turn: the side you want to find the available moves for, can be either 'red' or 'black'
+
+    returns:
+    - an array of available moves with the following layout:
+    [current_position_of_piece, [list_of_positions_jumped], end_position_of_piece]
+
+    """
+
     all_moves = []
     if turn == "black":
         # iterate through board
@@ -109,7 +122,6 @@ def availableMoves(gameboard, turn):
                 try:
                     if j-1 >= 0:
                         if gameboard[i-1][j-1] == " ":
-                            print(f'here! i: {i}, j-1: {j-1}')
                             move = [chr(j+65)+str(i+1),[],chr(j+64)+str(i)]
                             all_moves.append(move)
                 except IndexError:
@@ -169,6 +181,9 @@ def availableMoves(gameboard, turn):
 
     return all_moves
 
+
+def checkValidMove(curr_pos, end_pos):
+    pass
 
 
 def printBoard(gameboard):
