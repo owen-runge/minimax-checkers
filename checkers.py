@@ -12,8 +12,12 @@ def main():
                  ["r", " ", "r", " ", "r", " ", "r", " "]]
 
     printBoard(gameboard)
-    print(f'All available moves for black in this board state are: \n{availableMoves(gameboard,"black")}')
-    print(f'All available moves for black in this board state are: \n{availableMoves(gameboard,"red")}')
+    #print(f'All available moves for black in this board state are: \n{availableMoves(gameboard,"black")}')
+    #print(f'All available moves for black in this board state are: \n{availableMoves(gameboard,"red")}')
+    #checkValidMove(gameboard, "F3", "H5", "black")
+    #checkValidMove(gameboard, "G6", "E4", "red")
+    #checkValidMove(gameboard, "C6", "A8", "red")
+    #checkValidMove(gameboard, "D3", "B1", "black")
     return 0
 
 
@@ -182,8 +186,95 @@ def availableMoves(gameboard, turn):
     return all_moves
 
 
-def checkValidMove(curr_pos, end_pos):
-    pass
+def checkValidMove(gameboard, curr_pos, end_pos, turn):
+    """
+    checkValidMove()
+
+    parameters:
+    - gameboard: full checkers board
+    - curr_pos: the current position of the piece to be moved
+    - end_pos: the desired end position of the piece to be moved
+    - turn: the side you want to find the available moves for, can be either 'red' or 'black'
+
+    returns:
+    - a boolean which says whether or not it's a valid move
+
+    """
+    curr_coords = (int(curr_pos[1])-1, int(ord(curr_pos[0]))-65)
+    end_coords = (int(end_pos[1])-1, int(ord(end_pos[0]))-65)
+    curr_piece = gameboard[curr_coords[0]][curr_coords[1]]
+    print(f'curr_coords: {curr_coords}, curr_piece: {curr_piece}, end_coords: {end_coords}')
+
+    if curr_piece == " ":
+        # check to see if there is a piece in in curr_pos
+        print("There is no piece there!")
+        return False
+    elif gameboard[end_coords[0]][end_coords[1]] != " ":
+        # check if end_pos is occupied by another piece
+        print("You are trying to move to a space that's occupied!")
+        return False
+    elif not (abs(curr_coords[0]-end_coords[0]) == abs(curr_coords[1]-end_coords[1]) and abs(curr_coords[0]-end_coords[0]) <= 2):
+        # check if move follows rules for checkers
+        print("You're attemping an invalid move!")
+        return False
+    elif turn == "black" and curr_piece in {"b", "B"}:
+        # check to see if current piece matches the turn of the person that's playing (black)
+        diff = (curr_coords[0]-end_coords[0], curr_coords[1]-end_coords[1])
+
+        if abs(diff[0]*diff[1]) == 1:
+            # if end_pos is one space away diagonally from curr_pos
+            if curr_piece == "b" and diff[0] < 0:
+                return True
+            elif curr_piece == "B":
+                return True
+            else:
+                print("That piece is not a king!")
+                return False
+        else:
+            # if end_pos is 2 spaces away diagonally from curr_pos
+            jumped_piece = gameboard[int(curr_coords[0]+(diff[0]*-0.5))][int(curr_coords[1]+(diff[1]*-0.5))]
+            if curr_piece == "b" and diff[0] < 0 and jumped_piece in {"r", "R"}:
+                return True
+            elif curr_piece == "B" and jumped_piece in {"r", "R"}:
+                return True
+            elif jumped_piece in {"b", "B", " "}:
+                print("You are trying to jump your own piece or an empty space!")
+                return False
+            else:
+                print("That piece is not a king!")
+                return False
+            
+    elif turn == "red" and curr_piece in {"r", "R"}:
+        # check to see if current piece matches the turn of the person that's playing (red)
+        diff = (curr_coords[0]-end_coords[0], curr_coords[1]-end_coords[1])
+
+        if abs(diff[0]*diff[1]) == 1:
+            # if end_pos is one space away diagonally from curr_pos
+            if curr_piece == "r" and diff[0] > 0:
+                return True
+            elif curr_piece == "R":
+                return True
+            else:
+                print("That piece is not a king!")
+                return False
+        else:
+            # if end_pos is 2 spaces away diagonally from curr_pos
+            jumped_piece = gameboard[int(curr_coords[0]+(diff[0]*-0.5))][int(curr_coords[1]+(diff[1]*-0.5))]
+            if curr_piece == "r" and diff[0] > 0 and jumped_piece in {"b", "B"}:
+                return True
+            elif curr_piece == "R" and jumped_piece in {"b", "B"}:
+                return True
+            elif jumped_piece in {"r", "R", " "}:
+                print("You are trying to jump your own piece or an empty space!")
+                return False
+            else:
+                print("That piece is not a king!")
+                return False
+        
+    else:
+        # final case is if player is trying to play for the other person
+        print("You cannot move for the other person!")
+        return False
 
 
 def printBoard(gameboard):
