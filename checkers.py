@@ -5,8 +5,8 @@ def main():
     gameboard = [[" ", "b", " ", "b", " ", "b", " ", "b"],
                  ["b", " ", "b", " ", "b", " ", "b", " "],
                  [" ", "b", " ", "b", " ", "b", " ", "b"],
-                 [" ", " ", " ", " ", " ", " ", " ", " "],
-                 [" ", " ", " ", " ", " ", " ", " ", " "],
+                 [" ", " ", " ", " ", " ", " ", "r", " "],
+                 [" ", " ", " ", " ", " ", "b", " ", " "],
                  ["r", " ", "r", " ", "r", " ", "r", " "],
                  [" ", "r", " ", "r", " ", "r", " ", "r"],
                  ["r", " ", "r", " ", "r", " ", "r", " "]]
@@ -14,10 +14,10 @@ def main():
     printBoard(gameboard)
     #print(f'All available moves for black in this board state are: \n{availableMoves(gameboard,"black")}')
     #print(f'All available moves for black in this board state are: \n{availableMoves(gameboard,"red")}')
-    #checkValidMove(gameboard, "F3", "H5", "black")
-    #checkValidMove(gameboard, "G6", "E4", "red")
-    #checkValidMove(gameboard, "C6", "A8", "red")
-    #checkValidMove(gameboard, "D3", "B1", "black")
+    print(checkValidMove(gameboard, "F3", "H5", "black"))
+    print(checkValidMove(gameboard, "G6", "E4", "red"))
+    print(checkValidMove(gameboard, "C6", "A8", "red"))
+    print(checkValidMove(gameboard, "D3", "B1", "black"))
     return 0
 
 
@@ -208,15 +208,15 @@ def checkValidMove(gameboard, curr_pos, end_pos, turn):
     if curr_piece == " ":
         # check to see if there is a piece in in curr_pos
         print("There is no piece there!")
-        return False
+        return (False, [])
     elif gameboard[end_coords[0]][end_coords[1]] != " ":
         # check if end_pos is occupied by another piece
         print("You are trying to move to a space that's occupied!")
-        return False
+        return (False, [])
     elif not (abs(curr_coords[0]-end_coords[0]) == abs(curr_coords[1]-end_coords[1]) and abs(curr_coords[0]-end_coords[0]) <= 2):
         # check if move follows rules for checkers
         print("You're attemping an invalid move!")
-        return False
+        return (False, [])
     elif turn == "black" and curr_piece in {"b", "B"}:
         # check to see if current piece matches the turn of the person that's playing (black)
         diff = (curr_coords[0]-end_coords[0], curr_coords[1]-end_coords[1])
@@ -224,25 +224,26 @@ def checkValidMove(gameboard, curr_pos, end_pos, turn):
         if abs(diff[0]*diff[1]) == 1:
             # if end_pos is one space away diagonally from curr_pos
             if curr_piece == "b" and diff[0] < 0:
-                return True
+                return (True, [])
             elif curr_piece == "B":
-                return True
+                return (True, [])
             else:
                 print("That piece is not a king!")
-                return False
+                return (False, [])
         else:
             # if end_pos is 2 spaces away diagonally from curr_pos
-            jumped_piece = gameboard[int(curr_coords[0]+(diff[0]*-0.5))][int(curr_coords[1]+(diff[1]*-0.5))]
+            jumped_coords = (int(curr_coords[0]+(diff[0]*-0.5)),int(curr_coords[1]+(diff[1]*-0.5)))
+            jumped_piece = gameboard[jumped_coords[0]][jumped_coords[1]]
             if curr_piece == "b" and diff[0] < 0 and jumped_piece in {"r", "R"}:
-                return True
+                return (True, [chr(jumped_coords[1]+65)+str(jumped_coords[0]+1)])
             elif curr_piece == "B" and jumped_piece in {"r", "R"}:
-                return True
+                return (True, [chr(jumped_coords[1]+65)+str(jumped_coords[0]+1)])
             elif jumped_piece in {"b", "B", " "}:
                 print("You are trying to jump your own piece or an empty space!")
-                return False
+                return (False, [])
             else:
                 print("That piece is not a king!")
-                return False
+                return (False, [])
             
     elif turn == "red" and curr_piece in {"r", "R"}:
         # check to see if current piece matches the turn of the person that's playing (red)
@@ -251,37 +252,59 @@ def checkValidMove(gameboard, curr_pos, end_pos, turn):
         if abs(diff[0]*diff[1]) == 1:
             # if end_pos is one space away diagonally from curr_pos
             if curr_piece == "r" and diff[0] > 0:
-                return True
+                return (True, [])
             elif curr_piece == "R":
-                return True
+                return (True, [])
             else:
                 print("That piece is not a king!")
-                return False
+                return (False, [])
         else:
             # if end_pos is 2 spaces away diagonally from curr_pos
-            jumped_piece = gameboard[int(curr_coords[0]+(diff[0]*-0.5))][int(curr_coords[1]+(diff[1]*-0.5))]
+            jumped_coords = (int(curr_coords[0]+(diff[0]*-0.5)),int(curr_coords[1]+(diff[1]*-0.5)))
+            jumped_piece = gameboard[jumped_coords[0]][jumped_coords[1]]
             if curr_piece == "r" and diff[0] > 0 and jumped_piece in {"b", "B"}:
-                return True
+                return (True, [chr(jumped_coords[1]+65)+str(jumped_coords[0]+1)])
             elif curr_piece == "R" and jumped_piece in {"b", "B"}:
-                return True
+                return (True, [chr(jumped_coords[1]+65)+str(jumped_coords[0]+1)])
             elif jumped_piece in {"r", "R", " "}:
                 print("You are trying to jump your own piece or an empty space!")
-                return False
+                return (False, [])
             else:
                 print("That piece is not a king!")
-                return False
+                return (False, [])
         
     else:
         # final case is if player is trying to play for the other person
         print("You cannot move for the other person!")
-        return False
+        return (False, [])
 
 
 def printBoard(gameboard):
-    print('    A    B    C    D    E    F    G    H')
+    """
+    printBoard()
+
+    parameters:
+    - gameboard: full checkers board
+
+    function:
+    - prints board
+
+    returns:
+    - no returns
+    """
+    print('    A   B   C   D   E   F   G   H')
+    print('  \u250C\u2500\u2500\u2500\u252C\u2500\u2500\u2500\u252C\u2500\u2500\u2500\u252C\u2500\u2500\u2500'+
+          '\u252C\u2500\u2500\u2500\u252C\u2500\u2500\u2500\u252C\u2500\u2500\u2500\u252C\u2500\u2500\u2500\u2510')
     count = 1
     for row in gameboard:
-        print(f'{count} {row}')
+        print(f'{count} \u2502', end='')
+        for space in row:
+            print(f' {space} \u2502', end='')
         count += 1
+        if count < 9:
+            print('\n  \u251C\u2500\u2500\u2500\u253C\u2500\u2500\u2500\u253C\u2500\u2500\u2500\u253C\u2500\u2500\u2500'+
+                  '\u253C\u2500\u2500\u2500\u253C\u2500\u2500\u2500\u253C\u2500\u2500\u2500\u253C\u2500\u2500\u2500\u2524')
+    print('\n  \u2514\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2534\u2500\u2500\u2500'+
+          '\u2534\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2518')
 
 main()
