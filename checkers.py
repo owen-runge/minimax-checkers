@@ -1,7 +1,11 @@
+#nonlocal variables
+capture_moves_check = 40
+
 def main():
     # main function
-
-    # create board
+    print("Welcome to a Game of Checkers\n")
+    print("This is your starting board state:")
+    # create board    
     gameboard = [[" ", "b", " ", "b", " ", "b", " ", "b"],
                  ["b", " ", "b", " ", "b", " ", "b", " "],
                  [" ", "b", " ", "b", " ", "b", " ", "b"],
@@ -10,17 +14,133 @@ def main():
                  ["r", " ", "r", " ", "r", " ", "r", " "],
                  [" ", "r", " ", "r", " ", "r", " ", "r"],
                  ["r", " ", "r", " ", "r", " ", "r", " "]]
-
+    
     printBoard(gameboard)
     #print(f'All available moves for black in this board state are: \n{availableMoves(gameboard,"black")}')
     #print(f'All available moves for black in this board state are: \n{availableMoves(gameboard,"red")}')
-    print(checkValidMove(gameboard, "F3", "H5", "black"))
-    print(checkValidMove(gameboard, "G6", "E4", "red"))
-    print(checkValidMove(gameboard, "C6", "A8", "red"))
-    print(checkValidMove(gameboard, "D3", "B1", "black"))
-    return 0
+    #checkValidMove(gameboard, "F3", "H5", "black")
+    #checkValidMove(gameboard, "G6", "E4", "red")
+    #checkValidMove(gameboard, "C6", "A8", "red")
+    #checkValidMove(gameboard, "D3", "B1", "black")    
+    #return 0
+    #playing the game 
+    #boolean to check if game is over
+    game_over = False
+    player_move = "black"
+    #while loop until game ends
+    while not game_over :                 
+        if player_move == "black" :           
+            print("Black Player please make your move:")
+            print("Please choose the position of the piece you want to move")
+            piece_initial_position = input()
+            print("Please choose the position you want to move the piece to")
+            piece_final_position = input()
+            #checking for valid move
+            valid_move, jumps = checkValidMove(gameboard, piece_initial_position, piece_final_position, player_move)
+            while not valid_move:
+                printBoard(gameboard)
+                print("Please again choose the position of the piece you want to move")
+                piece_initial_position = input()
+                print("Please again choose the position you want to move the piece to")
+                piece_final_position = input()
+                valid_move, jumps = checkValidMove(gameboard, piece_initial_position, piece_final_position, player_move)
+            #update board
+            gameboard = updateBoard(gameboard, jumps, piece_initial_position, piece_final_position)
+            #next player move
+            player_move = "red"     
+            #checkWin
+            game_over = checkWin(gameboard, player_move, jumps)            
+        else :           
+            print("Red Player please make your move:")
+            print("Please choose the position of the piece you want to move")
+            piece_initial_position = input()
+            print("Please choose the position you want to move the piece to")
+            piece_final_position = input()
+            #checking for valid move
+            valid_move, jumps = checkValidMove(gameboard, piece_initial_position, piece_final_position, player_move)
+            while not valid_move:
+                printBoard(gameboard)
+                print("Please again choose the position of the piece you want to move")
+                piece_initial_position = input()
+                print("Please again choose the position you want to move the piece to")
+                piece_final_position = input()
+                valid_move, jumps = checkValidMove(gameboard, piece_initial_position, piece_final_position, player_move)
+            #update board
+            gameboard = updateBoard(gameboard, jumps, piece_initial_position, piece_final_position)
+            #next player move 
+            player_move = "black"
+            #checkWin
+            game_over = checkWin(gameboard, player_move, jumps)        
+        printBoard(gameboard)
 
+def checkWin(gameboard, nextTurn, jumps):
+      
+    """
+    checkWin()
 
+    parameters:
+    - gameboard: full checkers board
+    - nextTurn : the player who is expected to make the next move
+    - jumps : all the jumps made by the piece the list    
+
+    returns:
+    - boolean of True and False if game is over or not
+    """    
+    #use nonlocal variable for 40 move capture check
+    global capture_moves_check
+    if len(jumps) == 0:
+        capture_moves_check -= 1
+        if capture_moves_check == 0 :
+            print("Game Drawn Due to No Capture in 40 Moves")
+            return True
+    else:
+        capture_moves_check = 40        
+   
+    #checking if there are still moves to be made
+    all_availableMoves = availableMoves(gameboard, nextTurn)
+    if len(all_availableMoves) == 0:
+        if nextTurn == "red":
+            print("Black Player Wins")
+            return True
+        else:
+            print("Red Player Wins")
+            return True
+    
+    return False    
+        
+
+def updateBoard(gameboard, jump_move_list, curr_pos, end_pos):  
+     
+    """
+    updateBoard()
+
+    parameters:
+    - gameboard: full checkers board
+    - jump_move_list : all the jumps made by the piece the list 
+
+    returns:
+    - gameboard
+    """
+    #the cord of each jump_move
+    #start move board update   
+    start_coords = (int(curr_pos[1])-1, int(ord(curr_pos[0]))-65)  
+    piece_type = gameboard[start_coords[0]][start_coords[1]] 
+    gameboard[start_coords[0]][start_coords[1]] = " "
+    for cord in jump_move_list:
+        jump_coords = (int(cord[1])-1, int(ord(cord[0]))-65)
+        gameboard[jump_coords[0]][jump_coords[1]] = " "
+    #end move board update
+    end_coords = (int(end_pos[1])-1, int(ord(end_pos[0]))-65)  
+    #update King Board
+    if end_coords[0] == 0 and piece_type == "r":
+        gameboard[end_coords[0]][end_coords[1]] = "R"
+    elif end_coords[0] == len(gameboard) - 1 and piece_type == "b":
+        gameboard[end_coords[0]][end_coords[1]] = "B"
+    else:
+        gameboard[end_coords[0]][end_coords[1]] = piece_type    
+    return gameboard    
+  
+  
 def availableMoves(gameboard, turn):
     """
     availableMoves()
