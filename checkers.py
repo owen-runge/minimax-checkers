@@ -1,3 +1,5 @@
+import sys
+
 #nonlocal variables
 capture_moves_check = 40
 
@@ -116,7 +118,9 @@ def updateBoard(gameboard, jump_move_list, curr_pos, end_pos):
 
     parameters:
     - gameboard: full checkers board
-    - jump_move_list : all the jumps made by the piece the list 
+    - jump_move_list : all the jumps made by the piece the list
+    - curr_pos: the current position of the piece to be moved
+    - end_pos: the desired end position of the piece to be moved
 
     returns:
     - gameboard
@@ -138,7 +142,42 @@ def updateBoard(gameboard, jump_move_list, curr_pos, end_pos):
         gameboard[end_coords[0]][end_coords[1]] = "B"
     else:
         gameboard[end_coords[0]][end_coords[1]] = piece_type    
-    return gameboard    
+    return gameboard
+
+
+def revertBoard(gameboard, jump_move_list, curr_pos, end_pos, jumped_piece):
+    """
+    revertBoard()
+
+    parameters:
+    - gameboard: full checkers board
+    - jump_move_list : all the jumps made by the piece the list
+    - curr_pos: the current position of the piece to be moved
+    - end_pos: the desired end position of the piece to be moved
+    - jumped_piece: the piece jumped to make the turn, if there was one
+
+    returns:
+    - gameboard
+    """
+
+    # the cord of each jump_move
+    # start move board update   
+    start_coords = (int(curr_pos[1])-1, int(ord(curr_pos[0]))-65)  
+    piece_type = gameboard[start_coords[0]][start_coords[1]] 
+    gameboard[start_coords[0]][start_coords[1]] = " "
+    for cord in jump_move_list:
+        jump_coords = (int(cord[1])-1, int(ord(cord[0]))-65)
+        gameboard[jump_coords[0]][jump_coords[1]] = jumped_piece
+    # end move board update
+    end_coords = (int(end_pos[1])-1, int(ord(end_pos[0]))-65)  
+    # update King Board
+    if end_coords[0] == 0 and piece_type == "r":
+        gameboard[end_coords[0]][end_coords[1]] = "R"
+    elif end_coords[0] == len(gameboard) - 1 and piece_type == "b":
+        gameboard[end_coords[0]][end_coords[1]] = "B"
+    else:
+        gameboard[end_coords[0]][end_coords[1]] = piece_type    
+    return gameboard
   
   
 def availableMoves(gameboard, turn):
@@ -318,12 +357,13 @@ def checkValidMove(gameboard, curr_pos, end_pos, turn):
 
     returns:
     - a boolean which says whether or not it's a valid move
+    - a list containing jumps if there are any
 
     """
     curr_coords = (int(curr_pos[1])-1, int(ord(curr_pos[0]))-65)
     end_coords = (int(end_pos[1])-1, int(ord(end_pos[0]))-65)
     curr_piece = gameboard[curr_coords[0]][curr_coords[1]]
-    print(f'curr_coords: {curr_coords}, curr_piece: {curr_piece}, end_coords: {end_coords}')
+    #print(f'curr_coords: {curr_coords}, curr_piece: {curr_piece}, end_coords: {end_coords}')
 
     if curr_piece == " ":
         # check to see if there is a piece in in curr_pos
@@ -397,6 +437,125 @@ def checkValidMove(gameboard, curr_pos, end_pos, turn):
         # final case is if player is trying to play for the other person
         print("You cannot move for the other person!")
         return (False, [])
+
+
+def findScore(gameboard, turn):
+    """
+    findScore()
+
+    parameters:
+    - gameboard: full checkers board
+    - turn: the side you want to find the available moves for, can be either 'red' or 'black'
+
+    returns:
+    -
+
+    """
+    score = 0
+    return score
+
+
+def minimax(gameboard, turn, turnsplayed, jumps):
+    """
+    minimax()
+
+    parameters:
+    - gameboard: full checkers board
+    - turn: the side you want to find the available moves for, can be either 'red' or 'black'
+    - turnsplayed: the depth of the recursion
+    - jumps: the jumps made during the turn being examined
+
+    returns:
+    - the best score the `turn` can achieve
+
+    """
+    
+    # base cases
+    if turn == "black":
+        # `turn` is black
+        winner = checkWin(gameboard, "red", jumps)
+        if winner == 0:
+            # return for a draw
+            return 0
+        elif winner == 1:
+            # return for a black win
+            return 100-turnsplayed
+    else:
+        # `turn` is red
+        winner = checkWin(gameboard, "black", jumps)
+        if winner == 0:
+            # return for a draw
+            return 0
+        elif winner == 2:
+            # return for a red win
+            return turnsplayed-100
+        
+    if turnsplayed == 3:
+        # only doing a 3 ply system due to the size of the tree
+        return findScore(gameboard, turn)
+    
+
+    if turn == "black":
+        maxscore = -sys.maxsize
+        for move in availableMoves(gameboard, "black"):
+            # save jumped piece to be added back after calling minimax
+            if len(move[1]) > 0:
+                jumped_coords = (int(move[1][0][1])-1, int(ord(move[1][0][0]))-65)
+                jumped_piece = gameboard[jumped_coords[0]][jumped_coords[1]]
+            else:
+                jumped_piece = " "
+            gameboard = updateBoard(gameboard, move[1], move[0], move[2])
+            score = minimax(gameboard, "red", turnsplayed+1, move[1])
+            gameboard = revertBoard(gameboard, move[1], move[2], move[0], jumped_piece)
+            maxscore = max(maxscore, score)
+        return maxscore
+    else:
+        minscore = sys.maxsize
+        for move in availableMoves(gameboard, "red"):
+            # save jumped piece to be added back after calling minimax
+            if len(move[1]) > 0:
+                jumped_coords = (int(move[1][0][1])-1, int(ord(move[1][0][0]))-65)
+                jumped_piece = gameboard[jumped_coords[0]][jumped_coords[1]]
+            else:
+                jumped_piece = " "
+            gameboard = updateBoard(gameboard, move[1], move[0], move[2])
+            score = minimax(gameboard, "black", turnsplayed+1, move[1])
+            gameboard = revertBoard(gameboard, move[1], move[2], move[0], jumped_piece)
+            minscore = min(minscore, score)
+        return minscore
+    
+
+def getBestMove(gameboard):
+    """
+    getBestMove()
+
+    parameters:
+    - gameboard: full checkers board
+
+    returns:
+    - the best move as evaluated by minimax
+
+    """
+
+    minscore = sys.maxsize
+    bestmove = None
+
+    for move in availableMoves(gameboard, "red"):
+        # save jumped piece to be added back after calling minimax
+        if len(move[1]) > 0:
+            jumped_coords = (int(move[1][0][1])-1, int(ord(move[1][0][0]))-65)
+            jumped_piece = gameboard[jumped_coords[0]][jumped_coords[1]]
+        else:
+            jumped_piece = " "
+        gameboard = updateBoard(gameboard, move[1], move[0], move[2])
+        score = minimax(gameboard, "black", 0, move[1])
+        gameboard = revertBoard(gameboard, move[1], move[2], move[0], jumped_piece)
+
+        if score < minscore:
+            minscore = score
+            bestmove = move
+
+    return bestmove
 
 
 def printBoard(gameboard):
