@@ -16,7 +16,7 @@ def main():
     
     printBoard(gameboard)
     #print(f'All available moves for black in this board state are: \n{availableMoves(gameboard,"black")}')
-    #print(f'All available moves for black in this board state are: \n{availableMoves(gameboard,"red")}')
+    #print(f'All available moves for red in this board state are: \n{availableMoves(gameboard,"red")}')
     #checkValidMove(gameboard, "F3", "H5", "black")
     #checkValidMove(gameboard, "G6", "E4", "red")
     #checkValidMove(gameboard, "C6", "A8", "red")
@@ -32,8 +32,16 @@ def main():
             print("Black Player please make your move:")
             print("Please choose the position of the piece you want to move")
             piece_initial_position = input()
+            if piece_initial_position == "exit":
+                print("Game resigned by Black!")
+                game_over = True
+                continue
             print("Please choose the position you want to move the piece to")
             piece_final_position = input()
+            if piece_final_position == "exit":
+                print("Game resigned by Black!")
+                game_over = True
+                continue
             #checking for valid move
             valid_move, jumps = checkValidMove(gameboard, piece_initial_position, piece_final_position, player_move)
             while not valid_move:
@@ -70,13 +78,18 @@ def main():
             # player_move = "black"
             # #checkWin
             # game_state = checkWin(gameboard, player_move)
+
+
             ai_move = getBestMove(gameboard)
-            print(ai_move)
+            #print(ai_move)
             gameboard = updateBoard(gameboard, ai_move[1], ai_move[0], ai_move[2])
             player_move = "black"
             game_state = checkWin(gameboard, player_move) 
-            if game_state == 3: 
-                print("Ai Move:")          
+            if game_state == 3:
+                if len(ai_move[1]) > 0:
+                    print(f'AI moves from {ai_move[0]} to {ai_move[2]} and takes piece at {ai_move[1][0]}!')
+                else:
+                    print(f'AI moves from {ai_move[0]} to {ai_move[2]}!')          
              
         if game_state == 0 : 
             print("Game Draw") 
@@ -102,10 +115,10 @@ def checkWin(gameboard, nextTurn):
     all_availableMoves = availableMoves(gameboard, nextTurn)
     if len(all_availableMoves) == 0:
         if nextTurn == "red":
-            print("Black Player Wins")
+            #print("Black Player Wins")
             return 1
         else:
-            print("Red Player Wins")
+            #print("Red Player Wins")
             return 2
     return 3   
         
@@ -144,7 +157,7 @@ def updateBoard(gameboard, jump_move_list, curr_pos, end_pos):
     return gameboard
 
 
-def revertBoard(gameboard, jump_move_list, curr_pos, end_pos, jumped_piece):
+def revertBoard(gameboard, jump_move_list, curr_pos, end_pos, jumped_piece, init_piece):
     """
     revertBoard()
 
@@ -154,6 +167,7 @@ def revertBoard(gameboard, jump_move_list, curr_pos, end_pos, jumped_piece):
     - curr_pos: the current position of the piece to be moved
     - end_pos: the desired end position of the piece to be moved
     - jumped_piece: the piece jumped to make the turn, if there was one
+    - init_piece: the original piece in its original state
 
     returns:
     - gameboard
@@ -169,13 +183,9 @@ def revertBoard(gameboard, jump_move_list, curr_pos, end_pos, jumped_piece):
         gameboard[jump_coords[0]][jump_coords[1]] = jumped_piece
     # end move board update
     end_coords = (int(end_pos[1])-1, int(ord(end_pos[0]))-65)  
-    # update King Board
-    if start_coords[0] == 0 and piece_type == "R":
-        gameboard[end_coords[0]][end_coords[1]] = "r"
-    elif start_coords[0] == len(gameboard) - 1 and piece_type == "B":
-        gameboard[end_coords[0]][end_coords[1]] = "b"
-    else:
-        gameboard[end_coords[0]][end_coords[1]] = piece_type    
+    # revert piece back to original state
+    gameboard[end_coords[0]][end_coords[1]] = init_piece
+    
     return gameboard
   
   
@@ -188,7 +198,7 @@ def availableMoves(gameboard, turn):
     - turn: the side you want to find the available moves for, can be either 'red' or 'black'
 
     returns:
-    - an array of available moves with the following layout:
+    - an array of available moves with each element having the following layout:
     [current_position_of_piece, [list_of_positions_jumped], end_position_of_piece]
 
     """
@@ -224,7 +234,7 @@ def availableMoves(gameboard, turn):
 
                 # check jumps valid for all black pieces
                 try:
-                    if j-1 >= 0:
+                    if j-2 >= 0:
                         if gameboard[i+1][j-1] in {"r", "R"} and gameboard[i+2][j-2] == " ":
                             move = [chr(j+65)+str(i+1),[chr(j+64)+str(i+2)],chr(j+63)+str(i+3)]
                             all_moves.append(move)
@@ -254,7 +264,7 @@ def availableMoves(gameboard, turn):
                         pass
                     # check jumps for kings only in last two directions
                     try:
-                        if j-1 >= 0:
+                        if j-2 >= 0:
                             if gameboard[i-1][j-1] in {"r", "R"} and gameboard[i-2][j-2] == " ":
                                 move = [chr(j+65)+str(i+1),[chr(j+64)+str(i)],chr(j+63)+str(i-1)]
                                 all_moves.append(move)
@@ -282,31 +292,33 @@ def availableMoves(gameboard, turn):
 
                 # check first two moves, valid for all red pieces king or not
                 try:
-                    if j-1 >= 0:
+                    if j-1 >= 0 and i-1 >= 0:
                         if gameboard[i-1][j-1] == " ":
                             move = [chr(j+65)+str(i+1),[],chr(j+64)+str(i)]
                             all_moves.append(move)
                 except IndexError:
                     pass
                 try:
-                    if gameboard[i-1][j+1] == " ":
-                        move = [chr(j+65)+str(i+1),[],chr(j+66)+str(i)]
-                        all_moves.append(move)
+                    if i-1 >=0:
+                        if gameboard[i-1][j+1] == " ":
+                            move = [chr(j+65)+str(i+1),[],chr(j+66)+str(i)]
+                            all_moves.append(move)
                 except IndexError:
                     pass
 
                 # check jumps valid for all red pieces
                 try:
-                    if j-1 >= 0:
+                    if j-2 >= 0 and i-2 >= 0:
                         if gameboard[i-1][j-1] in {"b", "B"} and gameboard[i-2][j-2] == " ":
                             move = [chr(j+65)+str(i+1),[chr(j+64)+str(i)],chr(j+63)+str(i-1)]
                             all_moves.append(move)
                 except IndexError:
                     pass
                 try:
-                    if gameboard[i-1][j+1] in {"b", "B"} and gameboard[i-2][j+2] == " ":
-                        move = [chr(j+65)+str(i+1),[chr(j+66)+str(i)],chr(j+67)+str(i-1)]
-                        all_moves.append(move)
+                    if i-2 >= 0:
+                        if gameboard[i-1][j+1] in {"b", "B"} and gameboard[i-2][j+2] == " ":
+                            move = [chr(j+65)+str(i+1),[chr(j+66)+str(i)],chr(j+67)+str(i-1)]
+                            all_moves.append(move)
                 except IndexError:
                     pass
 
@@ -327,7 +339,7 @@ def availableMoves(gameboard, turn):
                         pass
                     # check jumps for kings only in last two directions
                     try:
-                        if j-1 >= 0:
+                        if j-2 >= 0:
                             if gameboard[i+1][j-1] in {"b", "B"} and gameboard[i+2][j-2] == " ":
                                 move = [chr(j+65)+str(i+1),[chr(j+64)+str(i+2)],chr(j+63)+str(i+3)]
                                 all_moves.append(move)
@@ -518,13 +530,14 @@ def minimax(gameboard, turn, turnsplayed, jumps):
             # return for a red win
             return turnsplayed-100
         
-    if turnsplayed == 3:
+    if turnsplayed == 4:
         # only doing a 3 ply system due to the size of the tree
         return findScore(gameboard, turn)
     
 
     if turn == "black":
         maxscore = -sys.maxsize
+        #print(f'availableMoves for black={availableMoves(gameboard,"black")}, depth={turnsplayed}')
         for move in availableMoves(gameboard, "black"):
             # save jumped piece to be added back after calling minimax
             if len(move[1]) > 0:
@@ -532,13 +545,18 @@ def minimax(gameboard, turn, turnsplayed, jumps):
                 jumped_piece = gameboard[jumped_coords[0]][jumped_coords[1]]
             else:
                 jumped_piece = " "
+            # save initial piece to be added back after calling minimax
+            init_coords = (int(move[0][1])-1, int(ord(move[0][0]))-65)
+            init_piece = gameboard[init_coords[0]][init_coords[1]]
+
             gameboard = updateBoard(gameboard, move[1], move[0], move[2])
             score = minimax(gameboard, "red", turnsplayed+1, move[1])
-            gameboard = revertBoard(gameboard, move[1], move[2], move[0], jumped_piece)
+            gameboard = revertBoard(gameboard, move[1], move[2], move[0], jumped_piece, init_piece)
             maxscore = max(maxscore, score)
         return maxscore
     else:
         minscore = sys.maxsize
+        #print(f'availableMoves for red={availableMoves(gameboard,"red")}, depth={turnsplayed}')
         for move in availableMoves(gameboard, "red"):
             # save jumped piece to be added back after calling minimax
             if len(move[1]) > 0:
@@ -546,9 +564,13 @@ def minimax(gameboard, turn, turnsplayed, jumps):
                 jumped_piece = gameboard[jumped_coords[0]][jumped_coords[1]]
             else:
                 jumped_piece = " "
+            # save initial piece to be added back after calling minimax
+            init_coords = (int(move[0][1])-1, int(ord(move[0][0]))-65)
+            init_piece = gameboard[init_coords[0]][init_coords[1]]
+            
             gameboard = updateBoard(gameboard, move[1], move[0], move[2])
             score = minimax(gameboard, "black", turnsplayed+1, move[1])
-            gameboard = revertBoard(gameboard, move[1], move[2], move[0], jumped_piece)
+            gameboard = revertBoard(gameboard, move[1], move[2], move[0], jumped_piece, init_piece)
             minscore = min(minscore, score)
         return minscore
     
@@ -568,6 +590,7 @@ def getBestMove(gameboard):
     minscore = sys.maxsize
     bestmove = None
 
+    #print(f'availableMoves for red={availableMoves(gameboard,"red")}, depth={0}')
     for move in availableMoves(gameboard, "red"):
         # save jumped piece to be added back after calling minimax
         if len(move[1]) > 0:
@@ -575,9 +598,13 @@ def getBestMove(gameboard):
             jumped_piece = gameboard[jumped_coords[0]][jumped_coords[1]]
         else:
             jumped_piece = " "
+        # save initial piece to be added back after calling minimax
+        init_coords = (int(move[0][1])-1, int(ord(move[0][0]))-65)
+        init_piece = gameboard[init_coords[0]][init_coords[1]]
+
         gameboard = updateBoard(gameboard, move[1], move[0], move[2])
-        score = minimax(gameboard, "black", 0, move[1])
-        gameboard = revertBoard(gameboard, move[1], move[2], move[0], jumped_piece)
+        score = minimax(gameboard, "black", 1, move[1])
+        gameboard = revertBoard(gameboard, move[1], move[2], move[0], jumped_piece, init_piece)
 
         if score < minscore:
             minscore = score
