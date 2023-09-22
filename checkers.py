@@ -1,7 +1,4 @@
-import sys
-
-#nonlocal variables
-capture_moves_check = 40
+import sys  
 
 def main():
     # main function
@@ -51,64 +48,66 @@ def main():
             #next player move
             player_move = "red"     
             #checkWin
-            game_over = checkWin(gameboard, player_move, jumps)            
+            game_state = checkWin(gameboard, player_move)            
         else :           
-            print("Red Player please make your move:")
-            print("Please choose the position of the piece you want to move")
-            piece_initial_position = input()
-            print("Please choose the position you want to move the piece to")
-            piece_final_position = input()
-            #checking for valid move
-            valid_move, jumps = checkValidMove(gameboard, piece_initial_position, piece_final_position, player_move)
-            while not valid_move:
-                printBoard(gameboard)
-                print("Please again choose the position of the piece you want to move")
-                piece_initial_position = input()
-                print("Please again choose the position you want to move the piece to")
-                piece_final_position = input()
-                valid_move, jumps = checkValidMove(gameboard, piece_initial_position, piece_final_position, player_move)
-            #update board
-            gameboard = updateBoard(gameboard, jumps, piece_initial_position, piece_final_position)
-            #next player move 
+            # print("Red Player please make your move:")
+            # print("Please choose the position of the piece you want to move")
+            # piece_initial_position = input()
+            # print("Please choose the position you want to move the piece to")
+            # piece_final_position = input()
+            # #checking for valid move
+            # valid_move, jumps = checkValidMove(gameboard, piece_initial_position, piece_final_position, player_move)
+            # while not valid_move:
+            #     printBoard(gameboard)
+            #     print("Please again choose the position of the piece you want to move")
+            #     piece_initial_position = input()
+            #     print("Please again choose the position you want to move the piece to")
+            #     piece_final_position = input()
+            #     valid_move, jumps = checkValidMove(gameboard, piece_initial_position, piece_final_position, player_move)
+            # #update board
+            # gameboard = updateBoard(gameboard, jumps, piece_initial_position, piece_final_position)
+            # #next player move 
+            # player_move = "black"
+            # #checkWin
+            # game_state = checkWin(gameboard, player_move)
+            ai_move = getBestMove(gameboard)
+            print(ai_move)
+            gameboard = updateBoard(gameboard, ai_move[1], ai_move[0], ai_move[2])
             player_move = "black"
-            #checkWin
-            game_over = checkWin(gameboard, player_move, jumps)        
+            game_state = checkWin(gameboard, player_move) 
+            if game_state == 3: 
+                print("Ai Move:")          
+             
+        if game_state == 0 : 
+            print("Game Draw") 
+            game_over = True
+        elif game_state == 1 : 
+            print("Black Player Wins")
+            game_over = True
+        elif game_state == 2:
+            print("Red Player Wins")
+            game_over = True          
         printBoard(gameboard)
 
-def checkWin(gameboard, nextTurn, jumps):
-      
+def checkWin(gameboard, nextTurn):      
     """
     checkWin()
-
     parameters:
     - gameboard: full checkers board
-    - nextTurn : the player who is expected to make the next move
-    - jumps : all the jumps made by the piece the list    
-
+    - nextTurn : the player who is expected to make the next move    
     returns:
-    - boolean of True and False if game is over or not
+    - boolean 0 if draw,1 if black wins,2 if red wins, 3 if game ongoing
     """    
-    #use nonlocal variable for 40 move capture check
-    global capture_moves_check
-    if len(jumps) == 0:
-        capture_moves_check -= 1
-        if capture_moves_check == 0 :
-            print("Game Drawn Due to No Capture in 40 Moves")
-            return True
-    else:
-        capture_moves_check = 40        
-   
     #checking if there are still moves to be made
     all_availableMoves = availableMoves(gameboard, nextTurn)
     if len(all_availableMoves) == 0:
         if nextTurn == "red":
             print("Black Player Wins")
-            return True
+            return 1
         else:
             print("Red Player Wins")
-            return True
-    
-    return False    
+            return 2
+    return 3   
         
 
 def updateBoard(gameboard, jump_move_list, curr_pos, end_pos):  
@@ -171,10 +170,10 @@ def revertBoard(gameboard, jump_move_list, curr_pos, end_pos, jumped_piece):
     # end move board update
     end_coords = (int(end_pos[1])-1, int(ord(end_pos[0]))-65)  
     # update King Board
-    if end_coords[0] == 0 and piece_type == "r":
-        gameboard[end_coords[0]][end_coords[1]] = "R"
-    elif end_coords[0] == len(gameboard) - 1 and piece_type == "b":
-        gameboard[end_coords[0]][end_coords[1]] = "B"
+    if start_coords[0] == 0 and piece_type == "R":
+        gameboard[end_coords[0]][end_coords[1]] = "r"
+    elif start_coords[0] == len(gameboard) - 1 and piece_type == "B":
+        gameboard[end_coords[0]][end_coords[1]] = "b"
     else:
         gameboard[end_coords[0]][end_coords[1]] = piece_type    
     return gameboard
@@ -445,13 +444,42 @@ def findScore(gameboard, turn):
 
     parameters:
     - gameboard: full checkers board
-    - turn: the side you want to find the available moves for, can be either 'red' or 'black'
+    - turn: the side you want to find the score for, can be either 'red' or 'black'
 
     returns:
-    -
+    - score
 
     """
+    # score count
     score = 0
+    #double for loop through board find score for current pieces
+    for row in range(8):
+        for col in range(8):
+            if turn == "red":
+                if gameboard[row][col] == "r":
+                    score += 1
+                elif gameboard[row][col] == "R":
+                    score += 3
+            else:
+                if gameboard[row][col] == "b":
+                    score += 1
+                elif gameboard[row][col] == "B":
+                    score += 3
+    #possible moves points
+    available_moves = availableMoves(gameboard, turn)
+    #king next turn possible spaces dict
+    red_pos_king_dict = {'A1', 'B1', 'C1', 'D1', 'E1', 'F1', 'G1', 'H1'}
+    black_pos_king_dict = {'A8', 'B8', 'C8', 'D8', 'E8', 'F8', 'G8', 'H8'}
+    for moves in available_moves:
+        if len(moves[1]) == 1:
+            score += 2
+        if turn == "red":
+            if moves[2] in red_pos_king_dict:
+                score += 3 
+        else:
+            if moves[2] in black_pos_king_dict:
+                score += 3    
+       
     return score
 
 
@@ -473,7 +501,7 @@ def minimax(gameboard, turn, turnsplayed, jumps):
     # base cases
     if turn == "black":
         # `turn` is black
-        winner = checkWin(gameboard, "red", jumps)
+        winner = checkWin(gameboard, "red")
         if winner == 0:
             # return for a draw
             return 0
@@ -482,7 +510,7 @@ def minimax(gameboard, turn, turnsplayed, jumps):
             return 100-turnsplayed
     else:
         # `turn` is red
-        winner = checkWin(gameboard, "black", jumps)
+        winner = checkWin(gameboard, "black")
         if winner == 0:
             # return for a draw
             return 0
@@ -587,3 +615,4 @@ def printBoard(gameboard):
           '\u2534\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2518')
 
 main()
+#print(findScore(gameboard, "red"))
