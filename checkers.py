@@ -15,13 +15,6 @@ def main():
                  ["r", " ", "r", " ", "r", " ", "r", " "]]
     
     printBoard(gameboard)
-    #print(f'All available moves for black in this board state are: \n{availableMoves(gameboard,"black")}')
-    #print(f'All available moves for red in this board state are: \n{availableMoves(gameboard,"red")}')
-    #checkValidMove(gameboard, "F3", "H5", "black")
-    #checkValidMove(gameboard, "G6", "E4", "red")
-    #checkValidMove(gameboard, "C6", "A8", "red")
-    #checkValidMove(gameboard, "D3", "B1", "black")    
-    #return 0
     #playing the game 
     #boolean to check if game is over
     game_over = False
@@ -42,7 +35,16 @@ def main():
                 print("Game resigned by Black!")
                 game_over = True
                 continue
-            #checking for valid move
+            # Normalize move choices
+            # Initial position
+            piece_initial_position_ltr = piece_initial_position[0]
+            piece_initial_position_ltr = piece_initial_position_ltr.capitalize()
+            piece_initial_position = piece_initial_position_ltr + piece_initial_position[1]
+            # Final position
+            piece_final_position_ltr = piece_final_position[0]
+            piece_final_position_ltr = piece_final_position_ltr.capitalize()
+            piece_final_position = piece_final_position_ltr + piece_final_position[1]
+            # Checking for valid move
             valid_move, jumps = checkValidMove(gameboard, piece_initial_position, piece_final_position, player_move)
             while not valid_move:
                 printBoard(gameboard)
@@ -57,31 +59,12 @@ def main():
             player_move = "red"     
             #checkWin
             game_state = checkWin(gameboard, player_move)            
-        else :           
-            # print("Red Player please make your move:")
-            # print("Please choose the position of the piece you want to move")
-            # piece_initial_position = input()
-            # print("Please choose the position you want to move the piece to")
-            # piece_final_position = input()
-            # #checking for valid move
-            # valid_move, jumps = checkValidMove(gameboard, piece_initial_position, piece_final_position, player_move)
-            # while not valid_move:
-            #     printBoard(gameboard)
-            #     print("Please again choose the position of the piece you want to move")
-            #     piece_initial_position = input()
-            #     print("Please again choose the position you want to move the piece to")
-            #     piece_final_position = input()
-            #     valid_move, jumps = checkValidMove(gameboard, piece_initial_position, piece_final_position, player_move)
-            # #update board
-            # gameboard = updateBoard(gameboard, jumps, piece_initial_position, piece_final_position)
-            # #next player move 
-            # player_move = "black"
-            # #checkWin
-            # game_state = checkWin(gameboard, player_move)
-
-
+        else:
             ai_move = getBestMove(gameboard)
-            #print(ai_move)
+            if ai_move == None:
+                print("Game resigned by red!")
+                game_over = True
+                continue
             gameboard = updateBoard(gameboard, ai_move[1], ai_move[0], ai_move[2])
             player_move = "black"
             game_state = checkWin(gameboard, player_move) 
@@ -115,10 +98,8 @@ def checkWin(gameboard, nextTurn):
     all_availableMoves = availableMoves(gameboard, nextTurn)
     if len(all_availableMoves) == 0:
         if nextTurn == "red":
-            #print("Black Player Wins")
             return 1
         else:
-            #print("Red Player Wins")
             return 2
     return 3   
         
@@ -374,7 +355,6 @@ def checkValidMove(gameboard, curr_pos, end_pos, turn):
     curr_coords = (int(curr_pos[1])-1, int(ord(curr_pos[0]))-65)
     end_coords = (int(end_pos[1])-1, int(ord(end_pos[0]))-65)
     curr_piece = gameboard[curr_coords[0]][curr_coords[1]]
-    #print(f'curr_coords: {curr_coords}, curr_piece: {curr_piece}, end_coords: {end_coords}')
 
     if curr_piece == " ":
         # check to see if there is a piece in in curr_pos
@@ -537,7 +517,6 @@ def minimax(gameboard, turn, turnsplayed, jumps):
 
     if turn == "black":
         maxscore = -sys.maxsize
-        #print(f'availableMoves for black={availableMoves(gameboard,"black")}, depth={turnsplayed}')
         for move in availableMoves(gameboard, "black"):
             # save jumped piece to be added back after calling minimax
             if len(move[1]) > 0:
@@ -556,7 +535,6 @@ def minimax(gameboard, turn, turnsplayed, jumps):
         return maxscore
     else:
         minscore = sys.maxsize
-        #print(f'availableMoves for red={availableMoves(gameboard,"red")}, depth={turnsplayed}')
         for move in availableMoves(gameboard, "red"):
             # save jumped piece to be added back after calling minimax
             if len(move[1]) > 0:
@@ -590,7 +568,6 @@ def getBestMove(gameboard):
     minscore = sys.maxsize
     bestmove = None
 
-    #print(f'availableMoves for red={availableMoves(gameboard,"red")}, depth={0}')
     for move in availableMoves(gameboard, "red"):
         # save jumped piece to be added back after calling minimax
         if len(move[1]) > 0:
@@ -642,4 +619,3 @@ def printBoard(gameboard):
           '\u2534\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2518')
 
 main()
-#print(findScore(gameboard, "red"))
