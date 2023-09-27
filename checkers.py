@@ -510,7 +510,7 @@ def minimax(gameboard, turn, turnsplayed, jumps):
             # return for a red win
             return turnsplayed-100
         
-    if turnsplayed == 4:
+    if turnsplayed == 5:
         # only doing a 3 ply system due to the size of the tree
         return findScore(gameboard, turn)
     
